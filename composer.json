@@ -1,0 +1,11 @@
+{
+    "name": "video-player/profesional",
+    "description": "Reproductor de video profesional con Video.js",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "scripts": {
+        "start": "php -S 0.0.0.0:$PORT -t ."
+    }
+}
