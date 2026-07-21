@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProPlayer - Reproductor Profesional</title>
+    
+    <!-- Video.js CSS -->
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #1a1a1a;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .player-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+        }
+        
+        #main-player {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 15px;
+            color: #aaa;
+        }
+        
+        .error-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .stream-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #1a1a1a;
+            border-radius: 0 0 12px 12px;
+            font-size: 0.9em;
+        }
+        
+        .status-indicator {
+            color: #4caf50;
+            margin-right: 8px;
+        }
+        
+        .btn-error {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            background: #00d4ff;
+            color: #000;
+            transition: all 0.3s;
+        }
+        
+        .btn-error:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0;
+            }
+            .player-header, .stream-info {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="player-header">
+            <div class="logo">
+                <i class="fas fa-play-circle"></i>
+                <span>ProPlayer</span>
+            </div>
+        </div>
+
+        <!-- Contenedor del reproductor -->
+        <div class="player-wrapper">
+            <div id="loading-overlay" class="loading-overlay">
+                <div class="spinner"></div>
+                <p class="loading-text">Cargando reproductor...</p>
+            </div>
+
+            <div id="error-container" class="error-container hidden">
+                <i class="fas fa-exclamation-triangle" style="font-size: 3em; color: #ff4444; margin-bottom: 20px;"></i>
+                <h3>Error de reproducción</h3>
+                <p id="error-message"></p>
+                <div>
+                    <button onclick="location.reload()" class="btn-error">
+                        <i class="fas fa-redo"></i> Reintentar
+                    </button>
+                    <button id="btn-fallback" class="btn-error btn-secondary">
+                        <i class="fas fa-external-link-alt"></i> Modo Alternativo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Video Player -->
+            <video 
+                id="main-player" 
+                class="video-js vjs-default-skin vjs-big-play-centered" 
+                controls 
+                preload="auto"
+                playsinline>
+            </video>
+
+            <!-- Fallback Iframe -->
+            <iframe 
+                id="fallback-iframe" 
+                class="hidden"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
+                allowfullscreen
+                allow="autoplay; encrypted-media"
+                scrolling="no">
+            </iframe>
+        </div>
+
+        <!-- Info -->
+        <div class="stream-info">
+            <div>
+                <span class="status-indicator">●</span>
+                <span id="status-text">Conectando...</span>
+            </div>
+            <div>
+                <span id="stream-type" style="color: #00d4ff;"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+    <script src="js/player.js"></script>
+</body>
+</html>
