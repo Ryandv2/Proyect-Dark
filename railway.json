@@ -1,0 +1,11 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "echo 'Build complete'"
+  },
+  "deploy": {
+    "startCommand": "php -S 0.0.0.0:${PORT:-8080} -t .",
+    "healthcheckPath": "/",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
